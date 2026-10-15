@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MRIT · Mortgage Rate Intelligence Terminal</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="terminal.css">
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">
+    <span class="mark">MRIT</span>
+    <span class="sub">MORTGAGE RATE INTELLIGENCE</span>
+  </div>
+  <div id="ticker" class="ticker" aria-label="Current mortgage market"></div>
+  <div class="topright">
+    <span id="clock" class="mono"></span>
+    <button id="refreshBtn" class="btn" title="Re-ingest all sources (r)">REFRESH</button>
+  </div>
+</header>
+
+<nav id="tabs" role="tablist" aria-label="Screens"></nav>
+
+<main id="screen" tabindex="-1"></main>
+
+<footer id="statusbar">
+  <span id="statusLeft"></span>
+  <span id="statusMid"></span>
+  <span id="statusRight">
+    <kbd>:</kbd> command &nbsp; <kbd>?</kbd> help &nbsp; <kbd>[</kbd><kbd>]</kbd> screens
+  </span>
+</footer>
+
+<div id="palette" class="palette" hidden style="display:none" role="dialog" aria-modal="true" aria-label="Command bar">
+  <input id="paletteInput" type="text" autocomplete="off" spellcheck="false"
+         placeholder="Type a command. RATES  MBS  UST  SPREAD  FED  CPI  LABOR  CALENDAR  WHY  BRIEF  PRICING">
+  <ul id="paletteList" role="listbox"></ul>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

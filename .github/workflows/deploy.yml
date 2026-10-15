@@ -1,0 +1,41 @@
+name: Refresh MRIT
+
+# Cloudflare Pages builds and deploys MRIT on every push and on each scheduled ping
+# below. This workflow is only the scheduler: it POSTs to a Cloudflare Pages deploy
+# hook, which tells Cloudflare to rebuild with fresh data. The whole thing is free:
+# GitHub Actions minutes on a public repo are unlimited, and the build (which runs on
+# Cloudflare, not here) hits only free government data feeds with no AI anywhere.
+#
+# Setup (one time): create the deploy hook in the Cloudflare Pages project
+#   (Settings -> Builds & deployments -> Deploy hooks), then save its URL as the
+#   GitHub repo secret CLOUDFLARE_DEPLOY_HOOK_URL. See DEPLOY.md.
+
+on:
+  # Times are UTC; GitHub cron does not follow daylight saving, so the ET below drifts
+  # about an hour across the year. Each run is late enough to clear its release window
+  # in both EST and EDT.
+  #   14:00 UTC ~ 9-10am ET : after the 8:30 ET BLS prints and overnight moves  (weekdays)
+  #   22:00 UTC ~ 5-6pm ET  : after the Treasury curve posts (~3:30pm ET)        (weekdays)
+  #   17:00 UTC ~ noon-1pm ET : weekend freshness heartbeat; markets are closed  (Sat, Sun)
+  schedule:
+    - cron: '0 14 * * 1-5'
+    - cron: '0 22 * * 1-5'
+    - cron: '0 17 * * 6,0'
+  workflow_dispatch: {}
+
+concurrency:
+  group: mrit-refresh
+  cancel-in-progress: true
+
+jobs:
+  trigger-rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger a fresh Cloudflare Pages build
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}" ]; then
+            echo "CLOUDFLARE_DEPLOY_HOOK_URL secret is not set. See DEPLOY.md." >&2
+            exit 1
+          fi
+          curl -fsS -X POST "${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}"
+          echo "Triggered a Cloudflare Pages rebuild."

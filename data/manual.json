@@ -1,0 +1,5 @@
+{
+  "_comment": "No longer used. The Fed target range now comes from FRED (DFEDTARL/DFEDTARU), and the lender rate sheet and ISM series were removed so the terminal requires zero manual entry. Kept as an empty stub so load_manual() has nothing to do. To re-introduce a hand-entered series, add a registry row with source 'manual' and put dated observations here with a cited source.",
+  "_sources": {},
+  "observations": {}
+}

@@ -1,0 +1,11 @@
+{
+  "_comment": "Copy to config.json and add keys. Both are free and optional. Treasury, Freddie Mac PMMS and BLS all work with no key at all.",
+  "fred_api_key": "",
+  "_fred": "Free at https://fredaccount.stlouisfed.org/apikeys \u2014 unlocks Tier 5/6/8 (growth, VIX, credit spreads, Fed balance sheet, housing) and PCE and breakevens.",
+  "bls_api_key": "",
+  "_bls": "Free at https://data.bls.gov/registrationEngine/ \u2014 raises limits from 25 to 500 requests/day. BLS already works without it.",
+  "tenure_start": "2026-07-20",
+  "_tenure": "Your first day originating. Used to say whether a move is large in history or only large in the window you have personally watched.",
+  "eia_api_key": "",
+  "_eia": "Free at https://www.eia.gov/opendata/register.php - WTI and Brent crude spot prices. EIA is the originator; a FRED key also works as a fallback for these two."
+}
