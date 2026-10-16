@@ -67,6 +67,12 @@ def _copy_web():
 
 
 def main():
+    # Create the schema if the database is new. On a developer machine the db already
+    # exists from running server.py, but in CI it starts empty, so refreshing would
+    # hit "no such table" without this. init() is CREATE TABLE IF NOT EXISTS, so it is
+    # a no-op on an existing db.
+    store.init()
+
     if '--refresh' in sys.argv:
         from mrit import sources
         print('refreshing sources ...')
