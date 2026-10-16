@@ -1,19 +1,20 @@
 name: Refresh MRIT
 
-# Cloudflare Pages builds and deploys MRIT on every push and on each scheduled ping
-# below. This workflow is only the scheduler: it POSTs to a Cloudflare Pages deploy
-# hook, which tells Cloudflare to rebuild with fresh data. The whole thing is free:
-# GitHub Actions minutes on a public repo are unlimited, and the build (which runs on
-# Cloudflare, not here) hits only free government data feeds with no AI anywhere.
+# Keeps the published site current with no servers and no cost. On a schedule, GitHub
+# runs the Python build (GitHub runners already have Python), ingests fresh public data,
+# bakes the static site into dist/, and commits it. Cloudflare is connected to this repo
+# and redeploys automatically whenever dist/ changes, exactly like a plain static site.
 #
-# Setup (one time): create the deploy hook in the Cloudflare Pages project
-#   (Settings -> Builds & deployments -> Deploy hooks), then save its URL as the
-#   GitHub repo secret CLOUDFLARE_DEPLOY_HOOK_URL. See DEPLOY.md.
+# The data feeds are free government sources (Treasury, Freddie Mac PMMS, BLS, FRED).
+# There is no AI and no paid API anywhere, so every run is free.
+#
+# One-time setup: add your FRED key as a repo secret named FRED_API_KEY
+#   (Settings -> Secrets and variables -> Actions). Without it the FRED-backed tiers
+#   render UNAVAILABLE, which is honest; everything else still updates.
 
 on:
   # Times are UTC; GitHub cron does not follow daylight saving, so the ET below drifts
-  # about an hour across the year. Each run is late enough to clear its release window
-  # in both EST and EDT.
+  # about an hour across the year. Each run is late enough to clear its release window.
   #   14:00 UTC ~ 9-10am ET : after the 8:30 ET BLS prints and overnight moves  (weekdays)
   #   22:00 UTC ~ 5-6pm ET  : after the Treasury curve posts (~3:30pm ET)        (weekdays)
   #   17:00 UTC ~ noon-1pm ET : weekend freshness heartbeat; markets are closed  (Sat, Sun)
@@ -23,19 +24,38 @@ on:
     - cron: '0 17 * * 6,0'
   workflow_dispatch: {}
 
+permissions:
+  contents: write    # the job commits the rebuilt dist/ back to the repo
+
 concurrency:
   group: mrit-refresh
   cancel-in-progress: true
 
 jobs:
-  trigger-rebuild:
+  refresh:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger a fresh Cloudflare Pages build
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ingest fresh data and rebuild the site
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+        run: python3 build_static.py --refresh
+
+      - name: Commit the rebuilt site if it changed
         run: |
-          if [ -z "${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}" ]; then
-            echo "CLOUDFLARE_DEPLOY_HOOK_URL secret is not set. See DEPLOY.md." >&2
-            exit 1
+          git config user.name "mrit-refresh"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A dist
+          if git diff --cached --quiet; then
+            echo "No data changes this run."
+          else
+            git commit -m "Refresh data $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
           fi
-          curl -fsS -X POST "${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}"
-          echo "Triggered a Cloudflare Pages rebuild."
