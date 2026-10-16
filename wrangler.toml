@@ -1,2 +1,8 @@
 name = "mrit"
-pages_build_output_dir = "./dist"
+compatibility_date = "2026-10-16"
+
+# MRIT is a static site. These lines tell `wrangler deploy` to upload the pre-built
+# dist/ folder as the Worker's assets, with no Worker script. The scheduled GitHub
+# Action rebuilds dist/ and commits it; Cloudflare redeploys on each push.
+[assets]
+directory = "./dist"
